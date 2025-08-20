@@ -17,6 +17,7 @@ on:
         - production
 
 env:
+  PUSH_REGISTRY: docker.io
   REGISTRY: index.docker.io
   IMAGE_NAME: hadonas/rag-qna-service
   AZURE_WEBAPP_NAME: rag-qna-service
@@ -62,7 +63,7 @@ jobs:
     - name: Log in to Docker Hub
       uses: docker/login-action@v3
       with:
-        registry: ${{ env.REGISTRY }}
+        registry: ${{ env.PUSH_REGISTRY }}
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         
@@ -70,7 +71,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        images: ${{ env.PUSH_REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
           type=ref,event=branch
           type=ref,event=pr
