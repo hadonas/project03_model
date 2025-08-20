@@ -42,48 +42,32 @@ jobs:
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         images: hadonas/rag-qna-service:latest
         
-    - name: Update App Service Environment Variables
+    - name: Wait for deployment
       run: |
-        echo "Updating environment variables..."
-        
-        # 환경 변수 설정 (GitHub Secrets에서 가져옴)
-        az webapp config appsettings set \
-          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-          --name ${{ env.AZURE_WEBAPP_NAME }} \
-          --settings \
-            AZURE_OPENAI_API_KEY="${{ secrets.AZURE_OPENAI_API_KEY }}" \
-            AZURE_OPENAI_ENDPOINT="${{ secrets.AZURE_OPENAI_ENDPOINT }}" \
-            AZURE_OPENAI_API_VERSION="${{ secrets.AZURE_OPENAI_API_VERSION }}" \
-            MONGODB_URI="${{ secrets.MONGODB_URI }}" \
-            MONGO_DB="${{ secrets.MONGO_DB }}" \
-            MONGO_COLL="${{ secrets.MONGO_COLL }}" \
-            AZURE_OPENAI_CHAT_DEPLOYMENT="${{ secrets.AZURE_OPENAI_CHAT_DEPLOYMENT }}" \
-            AZURE_OPENAI_EMB_DEPLOYMENT="${{ secrets.AZURE_OPENAI_EMB_DEPLOYMENT }}" \
-            MONGO_VECTOR_INDEX="${{ secrets.MONGO_VECTOR_INDEX }}" \
-            MONGO_TEXT_INDEX="${{ secrets.MONGO_TEXT_INDEX }}"
-            
-    - name: Restart App Service
-      run: |
-        az webapp restart \
-          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-          --name ${{ env.AZURE_WEBAPP_NAME }}
-          
-    - name: Health Check
-      run: |
-        echo "Waiting for app to start..."
+        echo "Waiting for deployment to complete..."
         sleep 30
         
-        # 헬스체크 시도
-        APP_URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net"
-        echo "Checking health at: $APP_URL/health"
+    - name: Health Check
+      run: |
+        echo "Checking app health..."
+        APP_URL="https://${{ env.AZURE_WEBAPP_NAME }}-d0evbkbmbxeaf7at.scm.koreacentral-01.azurewebsites.net"
+        echo "App URL: $APP_URL"
         
-        # 최대 5번 시도
+        # 헬스체크 시도
         for i in {1..5}; do
+          echo "Health check attempt $i/5..."
           if curl -f "$APP_URL/health" > /dev/null 2>&1; then
             echo "✅ App is healthy!"
+            echo "Health check URL: $APP_URL/health"
+            echo "API docs URL: $APP_URL/docs"
             break
           else
-            echo "⏳ Attempt $i: App not ready yet, waiting..."
-            sleep 10
+            if [ $i -lt 5 ]; then
+              echo "⏳ App not ready yet, waiting 10 seconds..."
+              sleep 10
+            else
+              echo "⚠️  Health check failed after 5 attempts"
+              echo "Please check the app manually at: $APP_URL"
+            fi
           fi
         done
