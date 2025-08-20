@@ -104,12 +104,17 @@ az webapp config appsettings set \
 az webapp config appsettings set \
   --resource-group ragQnaResourceGroup \
   --name rag-qna-service \
-  --settings AZURE_OPENAI_EMB_DEPLOYMENT="text-embedding-ada-002"
+  --settings AZURE_OPENAI_EMB_DEPLOYMENT="text-embedding-3-small"
 
 az webapp config appsettings set \
   --resource-group ragQnaResourceGroup \
   --name rag-qna-service \
-  --settings MONGO_VECTOR_INDEX="vector_idx"
+  --settings MONGO_VECTOR_INDEX="vector_index"
+
+az webapp config appsettings set \
+  --resource-group ragQnaResourceGroup \
+  --name rag-qna-service \
+  --settings MONGO_TEXT_INDEX="text_index"
 ```
 
 ### 3.2 환경 변수 확인
@@ -196,6 +201,7 @@ az webapp log download \
 2. **MongoDB 연결 오류**
    - MongoDB Atlas의 IP 화이트리스트에 Azure App Service IP 추가
    - 연결 문자열이 올바른지 확인
+   - vector_index와 text_index 인덱스가 생성되었는지 확인
 
 3. **Azure OpenAI API 오류**
    - API 키가 올바른지 확인

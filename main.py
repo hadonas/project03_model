@@ -5,8 +5,11 @@ from typing import Dict, List
 import uvicorn
 import logging
 
-# model.py에서 함수 import
-from model import answer_json
+# Azure Key Vault에서 환경 변수 로드
+import azure_keyvault
+
+# langchain_qa.py에서 RAGApp 클래스 import
+from langchain_qa import get_app
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -53,18 +56,17 @@ async def qna_endpoint(request: QnARequest):
     try:
         logger.info(f"Received question: {request.input_message}")
         
-        # model.py의 answer_json 함수 호출
-        result = answer_json(request.input_message)
+        # langchain_qa.py의 RAGApp 객체 활용 (캐싱된 객체 사용)
+        rag_app = get_app()
+        result = rag_app.answer_json(request.input_message)
         
         if result.get("success"):
             logger.info("Successfully generated response")
             return QnAResponse(**result)
         else:
-            logger.error(f"Model error: {result.get('error')}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Internal model error: {result.get('error')}"
-            )
+            logger.info("Model generated response but quality check failed")
+            # 성공하지 않았지만 에러는 아님 - 모델이 답변을 생성했지만 품질이 낮음
+            return QnAResponse(**result)
             
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")

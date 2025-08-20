@@ -6,6 +6,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - AZURE_KEY_VAULT_URL=${AZURE_KEY_VAULT_URL}
       - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
       - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
       - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION}
@@ -13,8 +14,9 @@ services:
       - MONGO_DB=${MONGO_DB:-insurance}
       - MONGO_COLL=${MONGO_COLL:-documents}
       - AZURE_OPENAI_CHAT_DEPLOYMENT=${AZURE_OPENAI_CHAT_DEPLOYMENT:-gpt-4.1-mini}
-      - AZURE_OPENAI_EMB_DEPLOYMENT=${AZURE_OPENAI_EMB_DEPLOYMENT:-text-embedding-ada-002}
-      - MONGO_VECTOR_INDEX=${MONGO_VECTOR_INDEX:-vector_idx}
+      - AZURE_OPENAI_EMB_DEPLOYMENT=${AZURE_OPENAI_EMB_DEPLOYMENT:-text-embedding-3-small}
+      - MONGO_VECTOR_INDEX=${MONGO_VECTOR_INDEX:-vector_index}
+      - MONGO_TEXT_INDEX=${MONGO_TEXT_INDEX:-text_index}
     volumes:
       - .:/app
     restart: unless-stopped
