@@ -8,8 +8,9 @@ import json
 import time
 
 # 서버 설정
-BASE_URL = "http://localhost:8000"  # 로컬 테스트용
-# BASE_URL = "https://your-app-service.azurewebsites.net"  # Azure 배포 후
+# BASE_URL = "http://localhost:8000"  # 로컬 테스트용
+BASE_URL = "https://rag-qna-service-d0evbkbmbxeaf7at.koreacentral-01.azurewebsites.net"  # Azure 배포 후
+
 
 def test_health_check():
     """헬스체크 엔드포인트 테스트"""

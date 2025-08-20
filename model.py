@@ -168,7 +168,7 @@ def _build_citations(docs: List[Dict]) -> List[Dict]:
         if key in seen:
             continue
         seen.add(key)
-        cites.append({"title": title, "page": page})
+        cites.append({"title": title, "page": str(page)})
     return cites
 
 # --- Atlas Vector Search 래퍼 (네가 만든 함수 써도 됨) ---

@@ -6,9 +6,9 @@
 set -e
 
 # 기본값 설정
-DOCKER_USERNAME=${1:-"your-docker-username"}
+DOCKER_USERNAME=${1:-"hadonas"}
 IMAGE_TAG=${2:-"latest"}
-IMAGE_NAME="ai-qa-service"
+IMAGE_NAME="rag-qna-service"
 
 echo "🚀 AI Q&A Service 배포 시작..."
 
@@ -19,11 +19,11 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 # Docker Hub 로그인 상태 확인
-if ! docker system info | grep -q "Username"; then
-    echo "⚠️  Docker Hub에 로그인되지 않았습니다."
-    echo "docker login 명령어로 로그인해주세요."
-    exit 1
-fi
+# if ! docker system info | grep -q "hadonas"; then
+#     echo "⚠️  Docker Hub에 로그인되지 않았습니다."
+#     echo "docker login 명령어로 로그인해주세요."
+#     exit 1
+# fi
 
 echo "📦 Docker 이미지 빌드 중..."
 docker build -t ${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} .
