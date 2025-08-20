@@ -6,24 +6,24 @@ import uvicorn
 import logging
 import os
 
+# 로깅 설정을 먼저 수행
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Azure Key Vault에서 환경 변수 로드 (선택적)
 try:
     import azure_keyvault
     logger.info("Azure Key Vault 모듈 로드 성공")
 except ImportError as e:
-    logging.warning(f"Azure Key Vault 모듈 로드 실패: {e}")
+    logger.warning(f"Azure Key Vault 모듈 로드 실패: {e}")
 
 # langchain_qa.py에서 RAGApp 클래스 import
 try:
     from langchain_qa import get_app
     logger.info("LangChain QA 모듈 로드 성공")
 except ImportError as e:
-    logging.error(f"LangChain QA 모듈 로드 실패: {e}")
+    logger.error(f"LangChain QA 모듈 로드 실패: {e}")
     raise
-
-# 로깅 설정
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="AI Q&A Service",
