@@ -8,6 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Python 의존성 파일 복사 및 설치
@@ -20,9 +21,9 @@ COPY . .
 # 포트 8000 노출
 EXPOSE 8000
 
-# 헬스체크 설정
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+# 헬스체크 설정 (더 관대한 설정)
+HEALTHCHECK --interval=60s --timeout=30s --start-period=120s --retries=5 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # 애플리케이션 실행
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
