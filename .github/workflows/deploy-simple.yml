@@ -42,11 +42,6 @@ jobs:
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         images: hadonas/rag-qna-service:latest
         
-    - name: Setup Azure CLI
-      uses: azure/setup-azure-cli@v1
-      with:
-        version: '2.0.0'
-        
     - name: Update App Service Environment Variables
       run: |
         echo "Updating environment variables..."
