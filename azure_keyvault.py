@@ -86,22 +86,34 @@ def load_env_from_keyvault():
         # Key Vault 매니저 생성
         kv_manager = AzureKeyVaultManager(vault_url)
         
-        # 필요한 시크릿들 가져오기
+        # .env.example에 있는 모든 필요한 시크릿들 가져오기
         required_secrets = [
             "AZURE-OPENAI-API-KEY",
             "AZURE-OPENAI-ENDPOINT", 
             "AZURE-OPENAI-API-VERSION",
-            "MONGODB-URI"
+            "AZURE-OPENAI-CHAT-DEPLOYMENT",
+            "AZURE-OPENAI-EMB-DEPLOYMENT",
+            "MONGODB-URI",
+            "MONGO-DB",
+            "MONGO-COLL",
+            "MONGO-VECTOR-INDEX",
+            "MONGO-TEXT-INDEX"
         ]
         
         secrets = kv_manager.get_required_secrets(required_secrets)
         
-        # 환경변수에 설정
+        # 환경변수에 설정 (Key Vault 이름을 환경변수 이름으로 매핑)
         env_mapping = {
             "AZURE-OPENAI-API-KEY": "AZURE_OPENAI_API_KEY",
             "AZURE-OPENAI-ENDPOINT": "AZURE_OPENAI_ENDPOINT",
             "AZURE-OPENAI-API-VERSION": "AZURE_OPENAI_API_VERSION",
-            "MONGODB-URI": "MONGODB_URI"
+            "AZURE-OPENAI-CHAT-DEPLOYMENT": "AZURE_OPENAI_CHAT_DEPLOYMENT",
+            "AZURE-OPENAI-EMB-DEPLOYMENT": "AZURE_OPENAI_EMB_DEPLOYMENT",
+            "MONGODB-URI": "MONGODB_URI",
+            "MONGO-DB": "MONGO_DB",
+            "MONGO-COLL": "MONGO_COLL",
+            "MONGO-VECTOR-INDEX": "MONGO_VECTOR_INDEX",
+            "MONGO-TEXT-INDEX": "MONGO_TEXT_INDEX"
         }
         
         for kv_name, env_name in env_mapping.items():
@@ -109,7 +121,7 @@ def load_env_from_keyvault():
                 os.environ[env_name] = secrets[kv_name]
                 logger.info(f"환경변수 {env_name} 설정 완료")
         
-        logger.info("Azure Key Vault에서 환경변수 로드 완료")
+        logger.info("Azure Key Vault에서 모든 환경변수 로드 완료")
         
     except Exception as e:
         logger.error(f"Azure Key Vault에서 환경변수 로드 실패: {str(e)}")
