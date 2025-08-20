@@ -17,7 +17,7 @@ on:
         - production
 
 env:
-  REGISTRY: docker.io
+  REGISTRY: index.docker.io
   IMAGE_NAME: hadonas/rag-qna-service
   AZURE_WEBAPP_NAME: rag-qna-service
   AZURE_WEBAPP_PACKAGE_PATH: '.'

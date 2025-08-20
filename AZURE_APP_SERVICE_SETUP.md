@@ -49,7 +49,8 @@ AZURE_KEY_VAULT_URL=https://your-keyvault-name.vault.azure.net/
 
 ### 1. 컨테이너 이미지
 - **Image source**: Docker Hub
-- **Image and tag**: `hadonas/rag-qna-service:latest`
+- **Image and tag**: `index.docker.io/hadonas/rag-qna-service:latest`
+- **Important**: `index.docker.io`를 명시적으로 포함해야 합니다!
 
 ### 2. 포트 설정
 - **Port**: 8000 (Dockerfile에서 EXPOSE된 포트)
@@ -82,6 +83,7 @@ AZURE_KEY_VAULT_URL=https://your-keyvault-name.vault.azure.net/
 - **MongoDB 연결 실패**: MONGODB_URI 확인
 - **OpenAI API 오류**: API 키와 엔드포인트 확인
 - **포트 바인딩 오류**: 포트 8000 설정 확인
+- **이미지 풀 실패**: `index.docker.io` 포함 여부 확인
 
 ### 3. 디버깅 방법
 ```bash
