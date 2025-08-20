@@ -273,7 +273,6 @@ az webapp log tail --name rag-qna-service --resource-group ragQnaResourceGroup
 ## 📝 라이선스
 
 이 프로젝트는 MIT 라이선스 하에 배포됩니다.
-
 ## 🤝 기여
 
 버그 리포트나 기능 제안은 이슈를 통해 제출해 주세요.
