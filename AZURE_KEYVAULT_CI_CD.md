@@ -9,10 +9,145 @@ Azure Key Vault를 CI/CD 파이프라인과 통합하여:
 - 환경별 설정값 자동 로드
 - 보안 강화된 자동 배포
 
+## ⚠️ 대안 방법: Azure Key Vault 없이 CI/CD하기
+
+**조직 관리자가 아니어서 Service Principal을 생성할 수 없는 경우**, 다음 방법들을 사용할 수 있습니다:
+
+### 방법 1: GitHub Secrets에 직접 환경 변수 저장 (가장 간단)
+
+#### 1.1 GitHub Secrets 설정
+GitHub 저장소의 **Settings > Secrets and variables > Actions**에서 다음 secrets를 추가:
+
+```bash
+# Azure OpenAI 설정
+AZURE_OPENAI_API_KEY=your-actual-api-key
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
+
+# MongoDB 설정
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
+MONGO_DB=insurance
+MONGO_COLL=documents
+
+# Azure OpenAI 배포 설정
+AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4.1-mini
+AZURE_OPENAI_EMB_DEPLOYMENT=text-embedding-3-small
+
+# MongoDB 인덱스 설정
+MONGO_VECTOR_INDEX=vector_index
+MONGO_TEXT_INDEX=text_index
+
+# Azure App Service 정보
+AZURE_WEBAPP_NAME=rag-qna-service
+AZURE_RESOURCE_GROUP=ragQnaResourceGroup
+AZURE_SUBSCRIPTION_ID=your-subscription-id
+```
+
+#### 1.2 간단한 GitHub Actions 워크플로우
+`.github/workflows/deploy-simple.yml` 파일 생성:
+
+```yaml
+name: Deploy to Azure (Simple)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        images: hadonas/rag-qna-service:latest
+```
+
+### 방법 2: Azure CLI를 통한 직접 배포
+
+#### 2.1 Azure CLI 로그인
+```bash
+# Azure CLI 설치 후 로그인
+az login
+
+# 구독 설정
+az account set --subscription $AZURE_SUBSCRIPTION_ID
+```
+
+#### 2.2 수동 배포 스크립트
+`deploy-manual.sh` 파일 생성:
+
+```bash
+#!/bin/bash
+
+# 환경 변수 설정
+export AZURE_OPENAI_API_KEY="your-api-key"
+export AZURE_OPENAI_ENDPOINT="https://your-resource.openai.azure.com/"
+export MONGODB_URI="mongodb+srv://username:password@cluster.mongodb.net/"
+
+# App Service 환경 변수 설정
+az webapp config appsettings set \
+  --resource-group ragQnaResourceGroup \
+  --name rag-qna-service \
+  --settings \
+    AZURE_OPENAI_API_KEY="$AZURE_OPENAI_API_KEY" \
+    AZURE_OPENAI_ENDPOINT="$AZURE_OPENAI_ENDPOINT" \
+    MONGODB_URI="$MONGODB_URI" \
+    MONGO_DB="insurance" \
+    MONGO_COLL="documents"
+
+# 컨테이너 이미지 업데이트
+az webapp config container set \
+  --resource-group ragQnaResourceGroup \
+  --name rag-qna-service \
+  --docker-custom-image-name hadonas/rag-qna-service:latest
+```
+
+### 방법 3: Docker Hub + Azure Container Registry
+
+#### 3.1 Azure Container Registry 사용
+```bash
+# Container Registry 생성
+az acr create \
+  --resource-group ragQnaResourceGroup \
+  --name ragQnaRegistry \
+  --sku Basic
+
+# 로그인
+az acr login --name ragQnaRegistry
+
+# 이미지 태그 및 푸시
+docker tag hadonas/rag-qna-service:latest ragQnaRegistry.azurecr.io/rag-qna-service:latest
+docker push ragQnaRegistry.azurecr.io/rag-qna-service:latest
+```
+
+#### 3.2 App Service에서 ACR 이미지 사용
+```bash
+# App Service에서 ACR 이미지 사용하도록 설정
+az webapp config container set \
+  --resource-group ragQnaResourceGroup \
+  --name rag-qna-service \
+  --docker-custom-image-name ragQnaRegistry.azurecr.io/rag-qna-service:latest
+```
+
+### 방법 4: Azure DevOps Pipelines
+
+Azure DevOps를 사용할 수 있다면:
+1. **Azure DevOps 프로젝트 생성**
+2. **Pipelines에서 YAML 파이프라인 생성**
+3. **Azure 구독 연결** (관리자가 이미 설정한 경우)
+4. **자동화된 배포 파이프라인 구성**
+
 ## 📋 사전 준비사항
 
 1. **Azure 구독**이 필요합니다
-2. **Azure Key Vault**가 생성되어 있어야 합니다
+2. **Azure Key Vault**가 생성되어 있어야 합니다 (선택사항)
 3. **GitHub Actions**가 설정되어 있어야 합니다
 4. **Azure CLI**가 설치되어 있어야 합니다
 
