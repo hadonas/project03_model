@@ -27,7 +27,7 @@ LangChain과 RAG(Retrieval-Augmented Generation)를 활용한 질의응답 서�
                         │ Azure Key Vault │    │ MongoDB Atlas   │
                         │ (Secrets)       │    │ Hybrid Search   │
                         └─────────────────┘    └─────────────────┘
-                                │                       │
+                                │                       ▼
                                 ▼                       ▼
                         ┌─────────────────┐    ┌─────────────────┐
                         │ Azure OpenAI    │    │ Document Store  │
@@ -36,6 +36,27 @@ LangChain과 RAG(Retrieval-Augmented Generation)를 활용한 질의응답 서�
 ```
 
 ## 📋 API 명세
+
+### GET /
+**헬스체크용 루트 엔드포인트**
+```json
+{
+    "message": "AI Q&A Service is running",
+    "status": "healthy"
+}
+```
+
+### GET /health
+**상세 헬스체크 엔드포인트**
+```json
+{
+    "status": "healthy",
+    "timestamp": "2024-01-01T00:00:00Z",
+    "service": "AI Q&A Service",
+    "version": "1.0.0",
+    "message": "All required environment variables are set"
+}
+```
 
 ### POST /qna
 
@@ -87,23 +108,25 @@ cd project03_model
 
 ### 2. 환경 변수 설정
 
-`env.example` 파일을 참고하여 `.env` 파일을 생성하세요.
+`env.example` 파일을 참고하여 `.env.local` 파일을 생성하세요.
 
 ```bash
-# Azure Key Vault 설정 (선택사항)
-AZURE_KEY_VAULT_URL=https://your-keyvault-name.vault.azure.net/
-
 # Azure OpenAI 설정
 AZURE_OPENAI_API_KEY=your-azure-openai-api-key-here
 AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
 AZURE_OPENAI_API_VERSION=2025-01-01-preview
+AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4.1-mini
+AZURE_OPENAI_EMB_DEPLOYMENT=text-embedding-3-small
 
 # MongoDB 설정
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
-
-# MongoDB 검색 인덱스 (하이브리드 검색용)
+MONGO_DB=insurance
+MONGO_COLL=documents
 MONGO_VECTOR_INDEX=vector_index
 MONGO_TEXT_INDEX=text_index
+
+# Azure Key Vault 설정 (선택사항)
+AZURE_KEY_VAULT_URL=https://your-keyvault-name.vault.azure.net/
 ```
 
 ### 3. 의존성 설치
@@ -137,6 +160,20 @@ docker run -p 8000:8000 rag-qna-service
 docker-compose up --build
 ```
 
+### 6. 로컬 테스트
+
+```bash
+# 테스트 스크립트 실행
+python test_local.py
+
+# 또는 직접 API 테스트
+curl http://localhost:8000/health
+curl http://localhost:8000/
+curl -X POST http://localhost:8000/qna \
+  -H "Content-Type: application/json" \
+  -d '{"input_message": "테스트 질문입니다."}'
+```
+
 ## 🚀 CI/CD 및 자동 배포
 
 ### GitHub Actions CI/CD
@@ -147,7 +184,47 @@ docker-compose up --build
 - **Docker 빌드**: 자동 이미지 빌드 및 Docker Hub 푸시
 - **자동 배포**: Azure App Service 자동 배포 (스테이징/프로덕션)
 
-**설정 방법**: [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md) 참조
+#### 설정 방법
+
+##### 1단계: GitHub Secrets 설정
+
+GitHub 저장소의 **Settings > Secrets and variables > Actions**에서 다음 secrets를 추가:
+
+```bash
+# Docker Hub
+DOCKER_USERNAME=your-docker-hub-username
+DOCKER_PASSWORD=your-docker-hub-access-token
+
+# Azure App Service
+AZURE_WEBAPP_PUBLISH_PROFILE=your-production-publish-profile-content
+AZURE_WEBAPP_PUBLISH_PROFILE_STAGING=your-staging-publish-profile-content
+```
+
+##### 2단계: GitHub Environments 설정
+
+1. **Staging Environment**: `staging` 이름으로 생성
+2. **Production Environment**: `production` 이름으로 생성
+3. **Protection Rules**: 프로덕션 환경에 승인 절차 설정
+
+##### 3단계: 브랜치 보호 규칙
+
+**Settings > Branches**에서 main 브랜치 보호 규칙 설정:
+
+```bash
+✓ Require a pull request before merging
+✓ Require approvals (최소 1명 이상)
+✓ Require status checks to pass before merging
+✓ Require branches to be up to date before merging
+✓ Include administrators
+```
+
+##### 4단계: 브랜치 전략
+
+```bash
+main          # 프로덕션 배포 (자동)
+├── develop   # 스테이징 배포 (자동)
+└── feature/* # 기능 개발 브랜치
+```
 
 ### Azure Key Vault 통합
 
@@ -157,23 +234,102 @@ Azure Key Vault를 활용하여 민감한 정보를 안전하게 관리:
 - **보안 강화**: API 키, 엔드포인트 등 민감 정보 보호
 - **CI/CD 통합**: GitHub Actions와 연동하여 보안 강화
 
-**설정 방법**: [AZURE_KEYVAULT_CI_CD.md](AZURE_KEYVAULT_CI_CD.md) 참조
-
 ## ☁️ Azure App Services 배포
 
-### 배포 방법
+### 필수 환경변수 설정
 
-자세한 배포 방법은 다음 가이드를 참조하세요:
+Azure App Service의 **Configuration > Application settings**에서 다음 환경변수들을 설정:
 
-- **[AZURE_DEPLOYMENT_SIMPLE.md](AZURE_DEPLOYMENT_SIMPLE.md)** - Azure Key Vault 없이 배포
-- **[AZURE_DEPLOYMENT_GUIDE.md](AZURE_DEPLOYMENT_GUIDE.md)** - Azure Key Vault 사용하여 배포 (보안 강화)
+#### 1. Azure OpenAI 설정
+```bash
+AZURE_OPENAI_API_KEY=your-openai-api-key
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
+AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4.1-mini
+AZURE_OPENAI_EMB_DEPLOYMENT=text-embedding-3-small
+```
 
-### 주요 단계:
+#### 2. MongoDB 설정
+```bash
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
+MONGO_DB=insurance
+MONGO_COLL=documents
+MONGO_VECTOR_INDEX=vector_index
+MONGO_TEXT_INDEX=text_index
+```
 
-1. **Docker 이미지 빌드 및 푸시**
-2. **App Service 생성 및 설정**
-3. **환경 변수 설정 (Key Vault 또는 직접)**
-4. **서비스 테스트 및 모니터링**
+#### 3. Azure Key Vault 설정 (선택사항)
+```bash
+AZURE_KEY_VAULT_URL=https://your-keyvault-name.vault.azure.net/
+```
+
+### Azure App Service 설정
+
+#### 1. 플랫폼 설정
+- **Operating System**: Linux
+- **Runtime stack**: Docker
+- **Region**: 가까운 지역 선택
+
+#### 2. 스케일링 설정
+- **Plan type**: Basic 이상 (컨테이너 실행을 위해)
+- **Size**: B1 이상 권장 (메모리 1GB 이상)
+
+#### 3. 네트워킹 설정
+- **HTTPS Only**: Enabled
+- **HTTP Version**: 2.0
+- **Minimum TLS Version**: 1.2
+
+### Docker 컨테이너 설정
+
+#### 1. 컨테이너 이미지
+- **Image source**: Docker Hub
+- **Image and tag**: `index.docker.io/hadonas/rag-qna-service:latest`
+- **Important**: `index.docker.io`를 명시적으로 포함해야 합니다!
+
+#### 2. 포트 설정
+- **Port**: 8000 (Dockerfile에서 EXPOSE된 포트)
+
+#### 3. 환경변수 전달
+모든 환경변수는 **Configuration > Application settings**에서 설정해야 합니다.
+
+### 모니터링 및 로깅
+
+#### 1. Application Insights 활성화
+- **Application Insights**: Enabled
+- **Connection string**: 자동 생성 또는 기존 사용
+
+#### 2. 로그 스트림 확인
+- **Log stream**: 실시간 로그 확인 가능
+- **Log level**: INFO 이상으로 설정
+
+#### 3. 헬스체크 엔드포인트
+- **Root endpoint**: `https://your-app.azurewebsites.net/`
+- **Health endpoint**: `https://your-app.azurewebsites.net/health`
+
+### 문제 해결
+
+#### 1. Application Error 발생 시
+1. **Log stream**에서 에러 로그 확인
+2. **Environment variables** 설정 확인
+3. **Container logs** 확인
+
+#### 2. 일반적인 문제들
+- **MongoDB 연결 실패**: MONGODB_URI 확인
+- **OpenAI API 오류**: API 키와 엔드포인트 확인
+- **포트 바인딩 오류**: 포트 8000 설정 확인
+- **이미지 풀 실패**: `index.docker.io` 포함 여부 확인
+
+#### 3. 디버깅 방법
+```bash
+# 로그 스트림 확인
+az webapp log tail --name your-app-name --resource-group your-resource-group
+
+# 환경변수 확인
+az webapp config appsettings list --name your-app-name --resource-group your-resource-group
+
+# 컨테이너 상태 확인
+az webapp show --name your-app-name --resource-group your-resource-group
+```
 
 ## 🔧 개발
 
@@ -191,11 +347,9 @@ project03_model/
 ├── docker-compose.yml          # 로컬 개발용 Docker Compose
 ├── .dockerignore               # Docker 빌드 제외 파일
 ├── env.example                 # 환경 변수 템플릿
-├── README.md                   # 프로젝트 문서
-├── GITHUB_ACTIONS_SETUP.md     # GitHub Actions 설정 가이드
-├── AZURE_KEYVAULT_CI_CD.md     # Azure Key Vault CI/CD 통합 가이드
-├── AZURE_DEPLOYMENT_SIMPLE.md  # 간단한 Azure 배포 가이드
-└── AZURE_DEPLOYMENT_GUIDE.md   # Azure Key Vault 사용 배포 가이드
+├── test_local.py               # 로컬 테스트 스크립트
+├── README.md                   # 프로젝트 문서 (이 파일)
+└── deprecated_models/          # 구버전 모델들
 ```
 
 ### 새로운 모델의 특징
@@ -270,9 +424,23 @@ az webapp log tail --name rag-qna-service --resource-group ragQnaResourceGroup
    - 관리 ID가 올바르게 설정되었는지 확인
    - Key Vault 액세스 정책이 올바르게 설정되었는지 확인
 
+5. **Docker 이미지 풀 실패**
+   - 이미지 URL에 `index.docker.io`가 포함되어 있는지 확인
+   - Docker Hub 인증이 올바른지 확인
+
+### 로컬 개발 문제
+
+1. **logger not defined 오류**
+   - `main.py`에서 로깅 설정이 import 전에 수행되었는지 확인
+
+2. **MongoDB Empty host 오류**
+   - `MONGODB_URI` 환경변수가 올바르게 설정되었는지 확인
+   - `.env.local` 파일이 프로젝트 루트에 있는지 확인
+
 ## 📝 라이선스
 
 이 프로젝트는 MIT 라이선스 하에 배포됩니다.
+
 ## 🤝 기여
 
 버그 리포트나 기능 제안은 이슈를 통해 제출해 주세요.
