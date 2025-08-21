@@ -80,9 +80,14 @@ JSON만 출력:
             title = d.get("source") or "unknown"
             if isinstance(title, str): title = _os.path.basename(title)
             page = d.get("page_number")
+            download_link = d.get("download_link") or ""  # ← 추가
             key = (title, page)
             if key in seen: continue
-            seen.add(key); cites.append({"title": title, "page": str(page)})
+            seen.add(key); cites.append({                 # ← 변경
+                "title": title, 
+                "page": str(page),
+                "download_link": download_link            # ← 추가
+            })
         return cites
 
     # ---------- 검색 (요청마다) ----------
@@ -90,7 +95,7 @@ JSON만 출력:
         pipe = [{"$search": {"index": self.TEXT_IDX, "text": {"query": query, "path": paths}}}]
         if filters: pipe.append({"$match": filters})
         pipe += [
-            {"$project": {"_id":1, "content":1, "source":1, "page_number":1,
+            {"$project": {"_id":1, "content":1, "source":1, "page_number":1, "download_link":1,
                           "_lexScore": {"$meta":"searchScore"}}},
             {"$limit": k}
         ]
@@ -101,7 +106,7 @@ JSON만 출력:
         pipe = [{"$vectorSearch": {"index": self.VECTOR_IDX, "path": "embedding",
                                    "queryVector": qvec, "numCandidates": num_candidates, "limit": k}}]
         if filters: pipe.append({"$match": filters})
-        pipe += [{"$project": {"_id":1, "content":1, "source":1, "page_number":1,
+        pipe += [{"$project": {"_id":1, "content":1, "source":1, "page_number":1, "download_link":1,
                                "_semScore":{"$meta":"vectorSearchScore"}}}]
         return list(self.col.aggregate(pipe))
 
