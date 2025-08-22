@@ -1,4 +1,4 @@
-# RAG (Retrieval-Augmented Generation) Service 🤖
+# RAG (Retrieval-Augmented Generation) Model 🤖
 
 > MongoDB Atlas Vector Search와 Azure OpenAI를 융합한 차세대 지능형 질의응답 마이크로서비스
 
@@ -1092,5 +1092,6 @@ SOFTWARE.
 ```
 
 ---
+
 
 > 💡 **더 많은 정보가 필요하시면 [MongoDB Atlas Vector Search 가이드](https://www.mongodb.com/docs/atlas/atlas-vector-search/)와 [Azure OpenAI 서비스 문서](https://docs.microsoft.com/ko-kr/azure/cognitive-services/openai/)를 참조하세요.**
